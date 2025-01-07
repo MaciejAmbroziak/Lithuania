@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Litwa", "Litwa\Litwa.csproj", "{A7C92217-A0A5-4C64-8CF6-B7397C790509}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A7C92217-A0A5-4C64-8CF6-B7397C790509}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C92217-A0A5-4C64-8CF6-B7397C790509}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7C92217-A0A5-4C64-8CF6-B7397C790509}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7C92217-A0A5-4C64-8CF6-B7397C790509}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {047A5D61-EC46-44D5-9469-E23A697C2160}
+	EndGlobalSection
+EndGlobal
