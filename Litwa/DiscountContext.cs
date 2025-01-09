@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Litwa
 {
-    internal class DiscountContext : DbContext
+    public class DiscountContext : DbContext, IDiscountContext
     {
         public DbSet<Discount> Discounts { get; set; }
 

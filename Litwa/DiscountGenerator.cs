@@ -1,26 +1,27 @@
-﻿using System;
+﻿using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Litwa
 {
-    public class DiscountGenerator
+    public class DiscountGenerator : IDiscountGenerator
     {
         public List<Discount> Discounts { get; set; }
         public int NumberOfDiscounts { get; set; }
-        public object Range { get; set; }
-        private DiscountContext _discountContext;
-        private DiscountRequest _discountRequest; 
+        public Range Range { get; set; }
 
-        public DiscountGenerator(int numberOfDiscounts, DiscountRequest discountRequest)
+        private IDiscountContext _discountContext;
+
+        public DiscountGenerator(int numberOfDiscounts)
         {
             NumberOfDiscounts = numberOfDiscounts;
             Discounts = new List<Discount>();
             _discountContext = new DiscountContext();
-            _discountRequest = discountRequest;
         }
 
         public void CreateDiscount(int length)
@@ -32,51 +33,56 @@ namespace Litwa
                 Used = false,
                 Length = length
             };
-            using (DiscountContext discountContext = new DiscountContext())
+            using(var dbContext = new DiscountContext())
             {
-                discountContext.Discounts.Add(discount);
-                discountContext.SaveChanges();
+                dbContext.Add(discount);
+                dbContext.SaveChanges();
             }
         }
 
-        public int CreateDiscounts(int length)
+        public void CreateDiscounts(int length)
         {
-            int discountsCreated = 0;
+            List<Discount> discountList = _discountContext.Discounts.ToList();
             for (int i = 0; i < NumberOfDiscounts; i++)
             {
-                string discountCode = Guid.NewGuid().ToString().Take(length).ToString()!;
+                string discountCode = Guid.NewGuid().ToString().Substring(0, length);
                 Discount discount = new Discount()
                 {
                     DiscountCode = discountCode,
                     Used = false,
                     Length = length
                 };
-                
+                if (discountList.IsNullOrEmpty())
+                {
+                    discountList.Add(discount);
+                }
+                if (discountList.Any(x => x.DiscountCode != discount.DiscountCode))
+                {
+                    discountList.Add(discount);
+                }
             }
-            using (DiscountContext discountContext = new DiscountContext())
+            using (var dbContext = new DiscountContext())
             {
-                discountContext.Discounts.AddRange(Discounts);
-                discountsCreated = discountContext.SaveChanges();
+                dbContext.AddRange(discountList);
+                dbContext.SaveChanges();
             }
-            return discountsCreated;
-        }
-        public int GetNumberOfDiscounts(bool used)
-        {
-            return _discountContext.Discounts.
-                Where(x => x.Used == used).
-                Where(y => y.Length == _discountRequest.Length)
-                .Count();
-        }
+            
 
+        }
         public Discount GetDiscount(bool used)
         {
-            return _discountContext.Discounts.Where(x=>x.Used == used).FirstOrDefault();
+            return _discountContext.Discounts.Where(x => x.Used == used).FirstOrDefault();
         }
 
-        public IQueryable<Discount> GetDiscounts(bool used, int numberOfDiscounts) 
+        public IQueryable<Discount> GetDiscounts(bool used, int numberOfDiscounts)
         {
             return _discountContext.Discounts.Where(x => x.Used == used).Take(numberOfDiscounts);
         }
 
+        public int GetNumberOfDiscounts()
+        {
+            int i = _discountContext.Discounts.Count();
+            return i;
+        }
     }
 }
