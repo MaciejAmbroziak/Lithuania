@@ -1,1 +1,1 @@
-Project done by junior aplying for junior position
+Project done by junior applying for junior position
