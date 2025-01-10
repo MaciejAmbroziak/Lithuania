@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="AcceptCodeRequest.cs" />
     <Compile Remove="Range.cs" />
     <Compile Remove="Threads.cs" />
   </ItemGroup>

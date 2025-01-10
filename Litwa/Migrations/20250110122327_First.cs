@@ -18,7 +18,8 @@ namespace Litwa.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Length = table.Column<int>(type: "int", nullable: false),
                     Used = table.Column<bool>(type: "bit", nullable: false),
-                    DiscountCode = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    DiscountCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Sent = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {

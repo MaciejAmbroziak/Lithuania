@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Litwa.Migrations
 {
     [DbContext(typeof(DiscountContext))]
-    [Migration("20250109131747_First")]
+    [Migration("20250110122327_First")]
     partial class First
     {
         /// <inheritdoc />
@@ -38,6 +38,9 @@ namespace Litwa.Migrations
 
                     b.Property<int>("Length")
                         .HasColumnType("int");
+
+                    b.Property<bool>("Sent")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Used")
                         .HasColumnType("bit");

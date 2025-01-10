@@ -20,8 +20,8 @@ class MyTcpListener
     {
         IDiscountContext discountContext = new DiscountContext();
         IDiscountGenerator discountGenerator = new DiscountGenerator(3000);
-        Console.WriteLine(discountGenerator.GetNumberOfDiscounts());
-        ProgramDiscounts program = new ProgramDiscounts(discountGenerator, discountContext);
+        IUseCode useCode = new UseCode();
+        ProgramDiscounts program = new ProgramDiscounts(discountGenerator, discountContext, useCode);
         program.Run();
     }
 }

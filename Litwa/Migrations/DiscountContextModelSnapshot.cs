@@ -36,6 +36,9 @@ namespace Litwa.Migrations
                     b.Property<int>("Length")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Sent")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("Used")
                         .HasColumnType("bit");
 

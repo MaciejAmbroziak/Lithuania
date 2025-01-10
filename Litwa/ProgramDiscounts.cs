@@ -1,6 +1,9 @@
-﻿using Litwa;
+﻿using Azure.Core;
+using Litwa;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -15,13 +18,18 @@ namespace Litwa
     {
         bool flag = true;
         private DiscountRequest _codeRequest;
+        private UseCodeRequest _useCodeRequest;
         private IDiscountContext _discountContext;
         private IDiscountGenerator _generator;
+        private IUseCode _useCode;
 
-        public ProgramDiscounts(IDiscountGenerator generator, IDiscountContext context)
+        public ProgramDiscounts(IDiscountGenerator generator, IDiscountContext context, IUseCode useCode)
         {
-            _codeRequest = new DiscountRequest();
+
+            _useCodeRequest = new UseCodeRequest();
+            _useCode = useCode;
             _discountContext = context;
+            _codeRequest = new DiscountRequest();
             _generator = generator;
         }
 
@@ -29,82 +37,88 @@ namespace Litwa
         {
             Server server = new Server();
             TcpClient tcpClient = server.Connect();
-            while (flag)
+            while (true)
             {
                 NetworkStream stream = tcpClient.GetStream();
                 Console.WriteLine("Listening");
+                int switchCase = 0;
                 Byte[] bytes = new byte[256];
-                int i;
-                string data ="";
-                i = stream.Read(bytes, 0, bytes.Length);
+                int i =0;
+                int j = bytes.Length;
+                string data = "";
+                i = stream.Read(bytes, i, j);
                 data = Encoding.UTF8.GetString(bytes, 0, i);
-                if (data != null & !data.Any(x => data.Contains('\0')))
+                j = j + i;
+                if (data != null)
                 {
-                    _codeRequest = JsonSerializer.Deserialize<DiscountRequest>(data)!;
-                    if (_codeRequest.Count <= 2000 & _codeRequest.Count > 0)
+                    if (data.Contains("Count"))
                     {
-                        while (_discountContext.Discounts
-                            .Where(x => x.Used == false)
-                            .Where(y => y.Length == _codeRequest.Length)
-                            .Count() < _codeRequest.Count)
+                        try
                         {
-                            _generator.CreateDiscounts(_codeRequest.Length);
+                            _codeRequest = JsonSerializer.Deserialize<DiscountRequest>(data)!;
+                            if (_codeRequest.Count <= 2000 & _codeRequest.Count > 0 & _codeRequest.Length >= 7 & _codeRequest.Length <= 8)
+                            {
+                                while (_discountContext.Discounts
+                                    .Where(x => x.Used == false)
+                                    .Where(y => y.Length == _codeRequest.Length)
+                                    .Count() < _codeRequest.Count)
+                                {
+                                    _generator.CreateDiscounts(_codeRequest.Length);
+                                }
+                                if (_discountContext.Discounts
+                                    .Where(x => x.Used == false)
+                                    .Where(y => y.Length == _codeRequest.Length)
+                                    .Count() >= _codeRequest.Count)
+                                {
+                                    List<Discount> discountList = _generator.GetDiscounts(_codeRequest.Count);
+                                    DiscountResponse codeResponse = new DiscountResponse(discountList, "", true);
+                                    string codeResponseString = JsonSerializer.Serialize(codeResponse);
+                                    byte[] discountMsg = Encoding.UTF8.GetBytes(codeResponseString);
+                                    stream.Write(discountMsg, 0, discountMsg.Length);
+                                }
+                            }
                         }
-                        if (_discountContext.Discounts
-                            .Where(x => x.Used == false)
-                            .Where(y => y.Length == _codeRequest.Length)
-                            .Count() >= _codeRequest.Count)
+                        catch (SocketException e)
                         {
-                            IQueryable<Discount> discountQuerry = _generator.GetDiscounts(false, _codeRequest.Count);
-                            DiscountResponse codeResponse = new DiscountResponse(discountQuerry.ToList(), "", true);
-                            string codeResponseString = JsonSerializer.Serialize(codeResponse);
-                            byte[] msg = Encoding.UTF8.GetBytes(codeResponseString);
-                            stream.Write(msg, 0, msg.Length);
+                            Console.WriteLine("SocketException: {0}", e);
                         }
+                    }
+                    else if (data.Contains("Code"))
+                    {
+                        {
+                            try
+                            {
+                                bool useCode;
+                                _useCodeRequest = JsonSerializer.Deserialize<UseCodeRequest>(data)!;
+                                if (_discountContext.Discounts
+                                        .Where(x => !x.Used)
+                                        .Where(y => y.Length == _codeRequest.Length)
+                                        .Count() >= _codeRequest.Count)
+                                {
+                                    useCode = _useCode.Use(_useCodeRequest.Code);
+
+                                }
+                                else
+                                {
+                                    useCode = false;
+                                }
+                                UseCodeResponse useCodeResponse = new UseCodeResponse(useCode);
+                                string useCodeResponseString = JsonSerializer.Serialize(useCodeResponse);
+                                byte[] useMsg = Encoding.UTF8.GetBytes(useCodeResponseString);
+                                stream.Write(useMsg, 0, useMsg.Length);
+                            }
+                            catch (SocketException e)
+                            {
+                                Console.WriteLine("SocketException: {0}", e);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        stream.Close();
 
                     }
                 }
-                //// Buffer for reading data
-                //Byte[] bytes = new Byte[256];
-                //String data = null;
-
-                //// Enter the listening loop.
-                //while (true)
-                //{
-                //    Console.Write("Waiting for a connection... ");
-
-                //    // Perform a blocking call to accept requests.
-                //    // You could also use server.AcceptSocket() here.
-                //    Console.WriteLine("Connected!");
-
-                //    data = null;
-
-                //    // Get a stream object for reading and writing
-                //    NetworkStream stream = client.GetStream();
-
-                //int i;
-
-
-
-                //        byte[] msg = System.Text.Encoding.UTF8.GetBytes(data);
-
-                //        // Send back a response.
-                //        stream.Write(msg, 0, msg.Length);
-                //        Console.WriteLine("Sent: {0}", data);
-                //    //    }
-                //    //}
-                //}
-                //catch (SocketException e)
-                //{
-                //    Console.WriteLine("SocketException: {0}", e);
-                //}
-                //finally
-                //{
-                //    server.Stop();
-                //}
-
-                Console.WriteLine("\nHit enter to continue...");
-                Console.ReadLine();
             }
         }
     }
